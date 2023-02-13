@@ -1,41 +1,32 @@
-import { useState } from "react";
-
 import Section from "../UI/Section";
 import ProductForm from "./ProductForm";
 
+import useHttp from "../../hooks/use-http";
+
 const NewProduct = ({ onAddProduct }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const httpRequestData = useHttp();
+  const { isLoading, error, sendHttpRequest: sendProduct } = httpRequestData;
+
+  const createProduct = (productText, productData) => {
+    const generatedId = productData.name;
+    const createdProduct = { id: generatedId, text: productText };
+
+    onAddProduct(createdProduct);
+  };
 
   const enterProductHandler = async (productText) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        "https://react-course-http-8220d-default-rtdb.firebaseio.com/products.json",
-        {
-          method: "POST",
-          body: JSON.stringify({ text: productText }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Ошибка запроса.");
-      }
-
-      const data = await response.json();
-
-      const generatedId = data.name;
-      const createdProduct = { id: generatedId, text: productText };
-
-      onAddProduct(createdProduct);
-    } catch (e) {
-      setError(e.message || "Что-то пошло не так...");
-    }
-    setIsLoading(false);
+    sendProduct(
+      {
+        endpoint:
+          "https://react-course-http-8220d-default-rtdb.firebaseio.com/products.json",
+        method: "POST",
+        body: { text: productText },
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+      createProduct.bind(null, productText)
+    );
   };
 
   return (
